@@ -32,13 +32,13 @@
         "description": "The VM size for the SQL Server VM, all available VM sizes in Azure can be found at https://azure.microsoft.com/en-us/documentation/articles/virtual-machines-windows-sizes"
       }
     },
-    "headNodeList": {
+    "headNodePrefixList": {
       "type": "string",
       "defaultValue": "HPCHN01,HPCHN02,HPCHN03",
       "minLength": 5,
-      "maxLength": 47,
+      "maxLength": 23,
       "metadata": {
-        "description": "The list of three head node names separated by comma. Do not add any surrounding whitespace."
+        "description": "The list of three head node prefixes separated by comma. Each prefix should be less then 7 charactors long. Do not add any surrounding whitespace."
       }
     },
     "headNodeOS": {
@@ -154,7 +154,10 @@
     "addressPrefix": "10.0.0.0/16",
     "subnet1Name": "Subnet-1",
     "subnet1Prefix": "10.0.0.0/22",
-    "headNodes": "[split(parameters('headNodeList'), ',')]",
+    "headNodePrefixes": "[split(parameters('headNodePrefixList'), ',')]",
+    "headNodeSuffix": "[toUpper(take(uniqueString(resourceGroup().id), 8))]",    
+    "headNodes": ["[concat(variables('headNodePrefixes')[0], variables('headNodeSuffix'))]", "[concat(variables('headNodePrefixes')[1], variables('headNodeSuffix'))]", "[concat(variables('headNodePrefixes')[2], variables('headNodeSuffix'))]"],
+    "headNodeList": "[concat(variables('headNodes')[0], ',', variables('headNodes')[1], ',', variables('headNodes')[2])]",
     "virtualNetworkName": "[concat(parameters('clusterName'),'vnet')]",
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnet1Name'))]",
@@ -801,7 +804,7 @@
               },
               "configurationArguments": {
                 "DomainName": "[parameters('privateDomainName')]",
-                "HeadNodeList": "[parameters('headNodeList')]"
+                "HeadNodeList": "[variables('headNodeList')]"
               }
             }
           },
@@ -854,7 +857,7 @@
               },
               "configurationArguments": {
                 "NodeType": "HeadNodePreReq",
-                "HeadNodeList": "[parameters('headNodeList')]",
+                "HeadNodeList": "[variables('headNodeList')]",
                 "SSLThumbprint": "[parameters('certThumbprint')]",
                 "PostConfigScript": ""
               }
@@ -885,7 +888,7 @@
             "function": "InstallHpcHeadNode"
           },
           "configurationArguments": {
-            "HeadNodeList": "[parameters('headNodeList')]",
+            "HeadNodeList": "[variables('headNodeList')]",
             "SSLThumbprint": "[parameters('certThumbprint')]",
             "LinuxCommOverHttp": true,
             "ClusterName": "[parameters('clusterName')]",
@@ -1004,7 +1007,7 @@
               "configurationArguments": {
                 "DomainName": "[parameters('privateDomainName')]",
                 "NodeType": "ComputeNode",
-                "HeadNodeList": "[parameters('headNodeList')]",
+                "HeadNodeList": "[variables('headNodeList')]",
                 "SSLThumbprint": "[parameters('certThumbprint')]",
                 "PostConfigScript": ""
               }
