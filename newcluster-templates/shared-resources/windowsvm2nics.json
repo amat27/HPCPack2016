@@ -20,7 +20,7 @@
         "description": "The network interface name"
       }
     },
-    "nicNameEx": {
+     "nicNameEx": {
       "type": "string",
       "metadata": {
         "description": "The external network interface name"
@@ -169,30 +169,14 @@
               }
             },
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'), 'Ex')]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicNameEx'))]",
               "properties": {
                 "primary": false
               }
             }
           ]
         }
-      },
-      "resources": [
-        {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(parameters('vmName'),'/installRDMADriver')]",
-          "apiVersion": "[parameters('apiVersion')]",
-          "location": "[resourceGroup().location]",
-          "dependsOn": [
-            "[concat('Microsoft.Compute/virtualMachines/', parameters('vmName'))]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.HpcCompute",
-            "type": "HpcVmDrivers",
-            "typeHandlerVersion": "1.1"
-          }
-        }
-      ]
+      }
     }
   ]
 }
