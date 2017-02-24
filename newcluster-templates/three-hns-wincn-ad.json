@@ -285,6 +285,39 @@
       }
     },
     {
+      "name": "[concat('setup', variables('headnodes')[copyIndex()], 'PublicIP')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2015-01-01",      
+      "copy": {
+        "name": "HNPips",
+        "count": "[length(variables('headNodes'))]"
+      },
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(variables('sharedResxBaseUrl'), '/publicip-new.json')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "apiVersion": {
+            "value": "[variables('apiVersion')]"
+          },
+          "publicIPAddressName": {
+            "value": "[concat(variables('headNodeList')[copyIndex()], 'PublicIp')]"
+          },
+          "publicIPAddressType": {
+            "value": "[variables('publicIPAddressType')]"
+          },
+          "domainNameLabel": {
+            "value": "[variables('headNodeList')[copyIndex()]]"
+          },
+          "publicIPRGName": {
+            "value": "[resourceGroup().name]"
+          }
+        }
+      }
+    },
+    {
       "apiVersion": "[variables('apiVersion')]",
       "name": "[variables('lbName')]",
       "type": "Microsoft.Network/loadBalancers",
@@ -502,6 +535,37 @@
       }
     },
     {
+      "apiVersion": "[variables('apiVersion')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'), 'Ex')]",
+      "location": "[resourceGroup().location]",
+      "dependsOn": [
+        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNameDC'))]",
+        "[concat('Microsoft.Resources/deployments/', concat('setup', variables('headnodes')[copyIndex()], 'PublicIP'))]"
+      ],
+      "copy": {
+        "name": "HNNicsEx",
+        "count": "[length(variables('headNodes'))]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "IPConfig",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('subnetRef')]"
+              },
+              "publicIPAddress": {
+                "id": "[reference(concat('setup', variables('headnodes')[copyIndex()], 'PublicIP')).outputs.resourceId.value]"
+              }             
+            }
+          }
+        ]
+      }
+    },
+    {
       "type": "Microsoft.Compute/availabilitySets",
       "name": "[variables('availabilitySetNameHN')]",
       "apiVersion": "[variables('apiVersion')]",
@@ -514,6 +578,7 @@
       "dependsOn": [
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetNameHN'))]",
         "[concat('Microsoft.Network/networkInterfaces/', variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'), 'Ex')]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountNameHN'))]"
       ],
       "copy": {
@@ -523,7 +588,7 @@
       "properties": {
         "mode": "Incremental",
         "templateLink": {
-          "uri": "[concat(variables('sharedResxBaseUrl'),'/windowsvm', variables('hnRDMASuffix'), '.json')]",
+          "uri": "[concat(variables('sharedResxBaseUrl'),'/windowsvm2nics', variables('hnRDMASuffix'), '.json')]",
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
@@ -535,6 +600,9 @@
           },
           "nicName": {
             "value": "[concat(variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'))]"
+          },
+          "nicNameEx": {
+            "value": "[concat(variables('headNodes')[copyIndex()], variables('uniqueNicSuffix'), 'Ex')]"
           },
           "vmName": {
             "value": "[variables('headNodes')[copyIndex()]]"
