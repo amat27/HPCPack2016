@@ -163,13 +163,13 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicNameEx'))]",
               "properties": {
                 "primary": true
               }
             },
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicNameEx'))]",
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]",
               "properties": {
                 "primary": false
               }
